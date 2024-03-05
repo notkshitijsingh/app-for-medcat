@@ -58,7 +58,7 @@ const ChatScreen = () => {
     }
 
     // chat data
-    const API_KEY = "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";
+    const API_KEY = "API-KEY";
 
     async function talkToMe(prompt) {
         try {
