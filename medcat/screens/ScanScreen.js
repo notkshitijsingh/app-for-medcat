@@ -1,68 +1,48 @@
-import React, { useState } from "react";
-import { View, Text, StyleSheet, Button, Image } from "react-native";
-import { launchImageLibraryAsync, MediaTypeOptions } from 'expo-image-picker';
-import TesseractOcr, { LANG_ENGLISH, useEventListener } from "react-native-tesseract-ocr";
+import React, { useState } from 'react';
 
-const ScanScreen = ({navigation}) => {
-    // OCR
-    const [recognizedText, setRecognizedText] = useState('');
-    const [loading, setLoading] = useState(false);
+const YourComponent = () => {
+  const [image, setImage] = useState(null);
+  const [apiResponse, setApiResponse] = useState('');
 
-    const selectImage = async () => {
-        try {
-        const result = await launchImageLibraryAsync({
-            mediaTypes: MediaTypeOptions.Images,
-            allowsEditing: false,
-            aspect: [4, 3],
-            quality: 1,
-        });
+  const handleImageChange = (event) => {
+    setImage(event.target.files[0]);
+  };
 
-        if (!result.cancelled) {
-            performOCR(result.uri);
-        }
-        } catch (error) {
-        console.error('Error selecting image:', error);
-        }
-    };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (!image) return;
 
-    const performOCR = async (imageUri) => {
-        try {
-        setLoading(true);
-        const recognizedText = await TesseractOcr.recognize(imageUri, LANG_ENGLISH);
-        setRecognizedText(recognizedText);
-        } catch (error) {
-        console.error('Error recognizing text:', error);
-        } finally {
-        setLoading(false);
-        }
-    };
+    const formData = new FormData();
+    formData.append('image', image);
 
-    // Use this event listener to get progress updates
-    useEventListener('onProgressChange', (e) => {
-        console.log('Progress:', e.progress); // e.progress is a number between 0 and 100
-    });
+    try {
+      const response = await fetch("https://eoi4zds3zvye1l6.m.pipedream.net", {
+        method: 'POST',
+        body: formData
+      });
+      
+      const data = await response.json(); // Parse JSON response
+      setApiResponse(data.message); // Set the message to state
+    } catch (error) {
+      console.error('Error:', error);
+    }
+  };
 
-    return(
-        <View style={styles.container}>
-             <Button title="Select Image" onPress={selectImage} disabled={loading} />
-            {loading && <Text>Loading...</Text>}
-            {recognizedText ? (
-                <View style={{ marginTop: 20 }}>
-                <Text>Recognized Text:</Text>
-                <Text>{recognizedText}</Text>
-                </View>
-            ) : null}  
-        </View>
-    );
+  return (
+    <div>
+      <form onSubmit={handleSubmit}>
+        <input type="file" accept="image/*" onChange={handleImageChange} />
+        <button type="submit">Submit</button>
+      </form>
+
+      {apiResponse && (
+        <div>
+          <h2>API Response:</h2>
+          <p>{apiResponse}</p>
+        </div>
+      )}
+    </div>
+  );
 };
 
-export default ScanScreen;
-
-const styles = StyleSheet.create({
-    container: {
-      flex: 1,
-      backgroundColor: '#fff',
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-});
+export default YourComponent;
